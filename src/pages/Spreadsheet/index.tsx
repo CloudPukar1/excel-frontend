@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
+import { cn } from "@/lib/utils";
 import { initialColumns } from "@/lib/constants";
 
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 interface ICell {
   col: number;
@@ -11,7 +13,37 @@ interface ICell {
   editable: boolean;
 }
 
-function Spreadsheet() {
+const retreiveSpreadsheets = async () => {
+  const response = await axios.get("<api_url>");
+  return response.data;
+};
+
+const addSpreadsheet = async () => {
+  const response = await axios.get("<api_url>");
+  return response.data;
+};
+
+export default function Spreadsheet() {
+  const queryClient = useQueryClient();
+
+  const [search, setSearch] = useState("");
+
+  const {
+    data: spreadsheets,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["spreadsheetData", { search }],
+    queryFn: () => retreiveSpreadsheets(search),
+  });
+
+  const { mutateAsync: addSpreadsheetMutation } = useMutation({
+    mutationFn: addSpreadsheet,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["spreadsheetData"]);
+    },
+  });
+
   const [selectedCell, setSelectedCell] = useState({
     row: 1,
     col: 1,
@@ -34,6 +66,11 @@ function Spreadsheet() {
     };
     getColumns();
   }, []);
+
+  if (isLoading) return <div>Fetching spreadsheets...</div>;
+  if (error) return <div>An error occurred: {error.message}</div>;
+
+  console.log(spreadsheets);
 
   return (
     <table>
@@ -112,5 +149,3 @@ function Spreadsheet() {
     </table>
   );
 }
-
-export default Spreadsheet;
