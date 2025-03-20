@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function RegisterForm({
+export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
