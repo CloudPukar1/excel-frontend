@@ -1,4 +1,7 @@
+import { useForm } from "react-hook-form";
+
 import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +17,14 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const onSubmit = (data) => {
+    console.log(data);
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -24,7 +35,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -58,8 +69,15 @@ export function LoginForm({
                     id="email"
                     type="email"
                     placeholder="m@example.com"
-                    required
-                  />
+                    {...register("email", {
+                      required: "email is required",
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: "Invalid email format",
+                      },
+                    })}
+                    />
+                    {errors.email && <p>{errors.email.message}</p>}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
@@ -71,7 +89,18 @@ export function LoginForm({
                       Forgot your password?
                     </a>
                   </div>
-                  <Input id="password" type="password" required />
+                  <Input
+                    id="password"
+                    type="password"
+                    {...register("password", {
+                      required: "password is requred",
+                      pattern: {
+                        value: /^(?=.*[A-Z].*[A-Z])(?=.*[!@#$&*])(?=.*[0-9].*[0-9])(?=.*[a-z].*[a-z].*[a-z]).{8}$/,
+                        message: "password must be at least 6 characters",
+                      },
+                    })}
+                  />
+                  {errors.password && <p>{errors.password?.message}</p>}
                 </div>
                 <Button type="submit" className="w-full">
                   Login
