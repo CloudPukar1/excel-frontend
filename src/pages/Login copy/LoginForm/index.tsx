@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function RegisterForm({
+export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
@@ -21,6 +21,7 @@ export function RegisterForm({
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm();
   const onSubmit = (data) => {
     console.log(data);
@@ -82,12 +83,6 @@ export function RegisterForm({
                 <div className="grid gap-2">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
-                    <a
-                      href="#"
-                      className="ml-auto text-sm underline-offset-4 hover:underline"
-                    >
-                      Forgot your password?
-                    </a>
                   </div>
                   <Input
                     id="password"
@@ -101,6 +96,21 @@ export function RegisterForm({
                     })}
                   />
                   {errors.password && <p>{errors.password?.message}</p>}
+                </div>
+                <div className="grid gap-2">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Confirm Password</Label>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    {...register("confirmPassword", {
+                      required: "password does not match",
+                      validate: (value) =>
+                        value === watch("password") || "password doesn't match",
+                    })}
+                  />
+                  {errors.confirmPassword && <p>{errors.confirmPassword.message}</p>}
                 </div>
                 <Button type="submit" className="w-full">
                   Login
