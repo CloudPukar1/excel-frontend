@@ -12,7 +12,7 @@ export const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/",
+    path: "/register",
     element: <Register />,
   },
   {
@@ -20,12 +20,12 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <Sheets />
+        element: <Sheets />,
       },
       {
         path: ":sheetId",
-        element: <Sheet />
-      }
-    ]
+        element: <Sheet />,
+      },
+    ],
   },
 ]);
