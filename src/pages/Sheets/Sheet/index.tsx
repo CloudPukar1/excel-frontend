@@ -26,14 +26,19 @@ export default function Sheet() {
     } = await axios.get(
       `http://localhost:3000/api/v1/sheet/${sheetId}?search=${search}`
     );
-    setCellValues(data);
-    console.log(data);
-    return data;
+    setCellValues(data.data);
+    console.log(data.data);
+    return data.data;
   };
 
   const updateSheet = async () => {
     const sheetData = JSON.parse(localStorage.getItem("cellValues")!);
-    const { data: { data } } = await axios.put(`http://localhost:3000/api/v1/sheet/${sheetId}`, sheetData);
+    const {
+      data: { data },
+    } = await axios.put(
+      `http://localhost:3000/api/v1/sheet/${sheetId}`,
+      sheetData
+    );
     console.log("sheet data polled");
     return data;
   };
@@ -43,7 +48,7 @@ export default function Sheet() {
     error,
     isLoading,
   } = useQuery({
-    queryKey: ["", { search }],
+    queryKey: ["sheetData", { search }],
     queryFn: () => retreiveSheet(search),
   });
 
@@ -99,7 +104,7 @@ export default function Sheet() {
   if (isLoading) return <div>Fetching sheets...</div>;
   if (error) return <div>An error occurred: {error.message}</div>;
 
-  console.log(sheets);
+  console.log(cellValues);
 
   return (
     <div>
@@ -121,7 +126,7 @@ export default function Sheet() {
           </tr>
         </thead>
         <tbody>
-          {cellValues.map((cellRowValues, rowIndex) => (
+          {sheets.map((cellRowValues, rowIndex) => (
             <tr>
               <th
                 className={cn(

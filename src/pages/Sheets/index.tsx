@@ -1,4 +1,6 @@
+import { useState } from "react";
 import axios from "axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   Table,
@@ -8,11 +10,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { MoreVerticalIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Sheets() {
   const queryClient = useQueryClient();
@@ -23,16 +32,23 @@ export default function Sheets() {
     console.log("fetching");
     const {
       data: { data },
-    } = await axios.get(
-      `http://localhost:3000/api/v1/sheet?search=${search}`
-    );
+    } = await axios.get(`http://localhost:3000/api/v1/sheet?search=${search}`);
     console.log(data);
     return data;
   };
 
-  const deleteSheet = async () => {
-    const sheetData = JSON.parse(localStorage.getItem("cellValues")!);
-    const { data: { data } } = await axios.delete(`http://localhost:3000/api/v1/sheet/${sheetId}`, sheetData);
+  const duplicateSheet = async () => {
+    const {
+      data: { data },
+    } = await axios.delete(`http://localhost:3000/api/v1/sheet/${sheetId}`);
+    return data;
+  };
+
+  const deleteSheet = async (sheetId: string) => {
+    console.log("deleting");
+    const {
+      data: { data },
+    } = await axios.delete(`http://localhost:3000/api/v1/sheet/${sheetId}`);
     return data;
   };
 
@@ -41,7 +57,7 @@ export default function Sheets() {
     error,
     isLoading,
   } = useQuery({
-    queryKey: ["", { search }],
+    queryKey: ["sheetsData", { search }],
     queryFn: () => retreiveSheets(search),
   });
 
@@ -51,6 +67,16 @@ export default function Sheets() {
       queryClient.invalidateQueries({ queryKey: ["sheetsData"] });
     },
   });
+
+  const { mutateAsync: duplicateSheetMutation } = useMutation({
+    mutationFn: duplicateSheet,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sheetsData"] });
+    },
+  });
+
+  if (isLoading) return <div>Fetching sheet...</div>;
+  if (error) return <div>An error occurred: {error.message}</div>;
   return (
     <div className="container mx-auto">
       <Input type="text" onChange={(e) => setSearch(e.target.value)} />
@@ -61,16 +87,47 @@ export default function Sheets() {
             <TableHead className="w-[100px]">S.N.</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead className="text-right">Modified</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell className="font-medium">INV001</TableCell>
-            <TableCell>Paid</TableCell>
-            <TableCell>Credit Card</TableCell>
-            <TableCell className="text-right">$250.00</TableCell>
-          </TableRow>
+          {sheets.map((sheet, index) => (
+            <TableRow key={sheet._id}>
+              <TableCell className="font-medium">{index + 1}</TableCell>
+              <TableCell>{sheet.name}</TableCell>
+              <TableCell>{sheet.createdAt}</TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+                      size="icon"
+                    >
+                      <MoreVerticalIcon />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-32">
+                    <Link to={`/sheet/${sheet._id}`}>
+                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuItem
+                      onClick={() => duplicateSheetMutation(sheet._id)}
+                    >
+                      Make a copy
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => deleteSheetMutation(sheet._id)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
