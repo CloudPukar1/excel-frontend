@@ -19,7 +19,7 @@ export default function Sheet() {
 
   const [search, setSearch] = useState("");
 
-  const retreiveSheets = async (search: string) => {
+  const retreiveSheet = async (search: string) => {
     console.log("fetching");
     const {
       data: { data },
@@ -44,7 +44,7 @@ export default function Sheet() {
     isLoading,
   } = useQuery({
     queryKey: ["", { search }],
-    queryFn: () => retreiveSheets(search),
+    queryFn: () => retreiveSheet(search),
   });
 
   const { mutateAsync: updateSheetMutation } = useMutation({
