@@ -13,11 +13,6 @@ interface ICell {
   editable: boolean;
 }
 
-const retreiveSpreadsheets = async () => {
-  const response = await axios.get("<api_url>");
-  return response.data;
-};
-
 const addSpreadsheet = async () => {
   const response = await axios.get("<api_url>");
   return response.data;
@@ -27,6 +22,16 @@ export default function Spreadsheet() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
+
+  const retreiveSpreadsheets = async () => {
+    console.log("fetching");
+    const {
+      data: { data },
+    } = await axios.get("http://localhost:3000/api/v1/sheet/5");
+    setCellValues(data);
+    console.log(data);
+    return data;
+  };
 
   const {
     data: spreadsheets,
@@ -50,11 +55,7 @@ export default function Spreadsheet() {
     editable: false,
   });
   const [columns, setColumns] = useState(initialColumns);
-  const [cellValues, setCellValues] = useState([
-    ["12", "abc", "16"],
-    ["15", "12", "!@$#"],
-    ["15", "12", "!@$#", ""],
-  ]);
+  const [cellValues, setCellValues] = useState([]);
 
   const handleCellClick = ({ row, col, editable }: ICell) => {
     setSelectedCell({ row, col, editable });
@@ -89,63 +90,65 @@ export default function Spreadsheet() {
           ))}
         </tr>
       </thead>
-      {cellValues.map((cellRowValues, rowIndex) => (
-        <tr>
-          <th
-            className={cn(
-              "h-8",
-              rowIndex + 1 === selectedCell.row && "bg-blue-400"
-            )}
-          >
-            {rowIndex + 1}
-          </th>
-          {cellRowValues.map((cellRowValue, colIndex) => (
-            <td
-              onClick={() =>
-                handleCellClick({
-                  row: rowIndex + 1,
-                  col: colIndex + 1,
-                  editable: false,
-                })
-              }
-              onDoubleClick={() =>
-                handleCellClick({
-                  row: rowIndex + 1,
-                  col: colIndex + 1,
-                  editable: true,
-                })
-              }
+      <tbody>
+        {cellValues.map((cellRowValues, rowIndex) => (
+          <tr>
+            <th
               className={cn(
                 "h-8",
-                selectedCell.row === rowIndex + 1 &&
-                  selectedCell.col === colIndex + 1
-                  ? "border-blue-700! border-2"
-                  : ""
+                rowIndex + 1 === selectedCell.row && "bg-blue-400"
               )}
             >
-              {selectedCell.editable &&
-              selectedCell.row === rowIndex + 1 &&
-              selectedCell.col === colIndex + 1 ? (
-                <Input
-                  autoFocus
-                  className="h-8 w-20 p-0 rounded-none border-none"
-                  type="text"
-                  value={cellRowValue}
-                  onChange={(e) =>
-                    setCellValues((prevCellValues) => {
-                      const arr = [...prevCellValues];
-                      arr[rowIndex][colIndex] = e.target.value;
-                      return arr;
-                    })
-                  }
-                />
-              ) : (
-                cellRowValue
-              )}
-            </td>
-          ))}
-        </tr>
-      ))}
+              {rowIndex + 1}
+            </th>
+            {cellRowValues.map((cellRowValue, colIndex) => (
+              <td
+                onClick={() =>
+                  handleCellClick({
+                    row: rowIndex + 1,
+                    col: colIndex + 1,
+                    editable: false,
+                  })
+                }
+                onDoubleClick={() =>
+                  handleCellClick({
+                    row: rowIndex + 1,
+                    col: colIndex + 1,
+                    editable: true,
+                  })
+                }
+                className={cn(
+                  "h-8",
+                  selectedCell.row === rowIndex + 1 &&
+                    selectedCell.col === colIndex + 1
+                    ? "border-blue-700! border-2"
+                    : ""
+                )}
+              >
+                {selectedCell.editable &&
+                selectedCell.row === rowIndex + 1 &&
+                selectedCell.col === colIndex + 1 ? (
+                  <Input
+                    autoFocus
+                    className="h-8 w-20 p-0 rounded-none border-none"
+                    type="text"
+                    value={cellRowValue}
+                    onChange={(e) =>
+                      setCellValues((prevCellValues) => {
+                        const arr = [...prevCellValues];
+                        arr[rowIndex][colIndex] = e.target.value;
+                        return arr;
+                      })
+                    }
+                  />
+                ) : (
+                  cellRowValue
+                )}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
     </table>
   );
 }
