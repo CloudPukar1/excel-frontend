@@ -4,7 +4,7 @@ import Login from "@/pages/Login";
 import Sheets from "@/pages/Sheets";
 
 import Sheet from "@/pages/Sheets/Sheet";
-import Register from "@/pages/Login copy";
+import Register from "@/pages/Register";
 
 export const router = createBrowserRouter([
   {
