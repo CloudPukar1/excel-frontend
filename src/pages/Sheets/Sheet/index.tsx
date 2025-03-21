@@ -7,6 +7,7 @@ import { initialColumns } from "@/lib/constants";
 
 import { Input } from "@/components/ui/input";
 import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface ICell {
   col: number;
@@ -65,6 +66,7 @@ export default function Sheet() {
   });
   const [editableCell, setEditableCell] = useState<ICell | null>();
   const [columns, setColumns] = useState(initialColumns);
+  const [page, setPage] = useState(1);
   const [cellValues, setCellValues] = useState<any[][]>([]);
 
   const handleCellClick = ({
@@ -82,33 +84,44 @@ export default function Sheet() {
 
   useEffect(() => {
     const getColumns = () => {
-      setColumns(initialColumns);
+      setColumns((prev) => [
+        ...prev,
+        ...initialColumns.map((col) => initialColumns[page - 2] + col),
+      ]);
     };
-    getColumns();
-  }, []);
+    if (page > 1) {
+      getColumns();
+    }
+  }, [page]);
 
   useEffect(() => {
     localStorage.setItem("cellValues", JSON.stringify(cellValues));
   }, [cellValues]);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      updateSheetMutation();
-    }, 10000);
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     updateSheetMutation();
+  //   }, 10000);
 
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
+  //   return () => {
+  //     clearInterval(intervalId);
+  //   };
+  // }, []);
 
   if (isLoading) return <div>Fetching sheets...</div>;
   if (error) return <div>An error occurred: {error.message}</div>;
 
-  console.log(cellValues);
+  console.log(columns);
 
   return (
     <div>
       <Input type="text" onChange={(e) => setSearch(e.target.value)} />
+      <Button
+        className="absolute right-1 top-0"
+        onClick={() => setPage((prev) => prev + 1)}
+      >
+        Add 26 more columns
+      </Button>
       <table>
         <thead>
           <tr className="text-center h-8">
@@ -171,7 +184,9 @@ export default function Sheet() {
                       value={cellRowValue}
                       onChange={(e) =>
                         setCellValues((prevCellValues) => {
-                          const arr = [...prevCellValues];
+                          const arr = JSON.parse(
+                            JSON.stringify(prevCellValues)
+                          );
                           arr[rowIndex][colIndex] = e.target.value;
                           return arr;
                         })
