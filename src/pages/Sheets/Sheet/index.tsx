@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-import { cn } from "@/lib/utils";
+import { cn, range } from "@/lib/utils";
 import { initialColumns } from "@/lib/constants";
 
 import { Input } from "@/components/ui/input";
@@ -66,7 +66,8 @@ export default function Sheet() {
   });
   const [editableCell, setEditableCell] = useState<ICell | null>();
   const [columns, setColumns] = useState(initialColumns);
-  const [page, setPage] = useState(1);
+  const [cols, setCols] = useState(1);
+  const [rows, setRows] = useState(1);
   const [cellValues, setCellValues] = useState<any[][]>([]);
 
   const handleCellClick = ({
@@ -86,13 +87,13 @@ export default function Sheet() {
     const getColumns = () => {
       setColumns((prev) => [
         ...prev,
-        ...initialColumns.map((col) => initialColumns[page - 2] + col),
+        ...initialColumns.map((col) => initialColumns[cols - 2] + col),
       ]);
     };
-    if (page > 1) {
+    if (cols > 1) {
       getColumns();
     }
-  }, [page]);
+  }, [cols]);
 
   useEffect(() => {
     localStorage.setItem("cellValues", JSON.stringify(cellValues));
@@ -118,9 +119,15 @@ export default function Sheet() {
       <Input type="text" onChange={(e) => setSearch(e.target.value)} />
       <Button
         className="absolute right-1 top-0"
-        onClick={() => setPage((prev) => prev + 1)}
+        onClick={() => setCols((prev) => prev + 1)}
       >
         Add 26 more columns
+      </Button>
+      <Button
+        className="absolute left-1 bottom-0"
+        onClick={() => setRows((prev) => prev + 1)}
+      >
+        Add 1000 more rows
       </Button>
       <table>
         <thead>
@@ -139,7 +146,7 @@ export default function Sheet() {
           </tr>
         </thead>
         <tbody>
-          {sheets.map((cellRowValues, rowIndex) => (
+          {range(1, rows * 1000).map((cellRowValues, rowIndex) => (
             <tr>
               <th
                 className={cn(
@@ -149,7 +156,7 @@ export default function Sheet() {
               >
                 {rowIndex + 1}
               </th>
-              {cellRowValues.map((cellRowValue, colIndex) => (
+              {/* {cellRowValues.map((cellRowValue, colIndex) => (
                 <td
                   onClick={() =>
                     handleCellClick({
@@ -196,7 +203,7 @@ export default function Sheet() {
                     cellRowValue
                   )}
                 </td>
-              ))}
+              ))} */}
             </tr>
           ))}
         </tbody>
