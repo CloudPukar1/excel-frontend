@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-import { cn, range } from "@/lib/utils";
+import { cn, generateMatrix, range } from "@/lib/utils";
 import { initialColumns } from "@/lib/constants";
 
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,6 @@ export default function Sheet() {
       `http://localhost:3000/api/v1/sheet/${sheetId}?search=${search}`
     );
     setCellValues(data.data);
-    console.log(data.data);
     return data.data;
   };
 
@@ -64,11 +63,12 @@ export default function Sheet() {
     row: 1,
     col: 1,
   });
-  const [editableCell, setEditableCell] = useState<ICell | null>();
-  const [columns, setColumns] = useState(initialColumns);
   const [cols, setCols] = useState(1);
   const [rows, setRows] = useState(1);
+  const [matrix, setMatrix] = useState<any[][]>([]);
+  const [columns, setColumns] = useState(initialColumns);
   const [cellValues, setCellValues] = useState<any[][]>([]);
+  const [editableCell, setEditableCell] = useState<ICell | null>();
 
   const handleCellClick = ({
     row,
@@ -108,29 +108,38 @@ export default function Sheet() {
   //     clearInterval(intervalId);
   //   };
   // }, []);
+  useEffect(() => {
+    console.log("called");
+    setMatrix(
+      generateMatrix(cols, rows).map((data, index) =>
+        data.map((_, i) =>
+          cellValues.length > index ? cellValues[index][i] : ""
+        )
+      )
+    );
+  }, [rows, cols]);
 
   if (isLoading) return <div>Fetching sheets...</div>;
   if (error) return <div>An error occurred: {error.message}</div>;
 
-  console.log(columns);
-
+  console.log(matrix);
   return (
     <div>
       <Input type="text" onChange={(e) => setSearch(e.target.value)} />
       <Button
-        className="absolute right-1 top-0"
+        className="absolute right-1 top-0 z-50"
         onClick={() => setCols((prev) => prev + 1)}
       >
         Add 26 more columns
       </Button>
       <Button
-        className="absolute left-1 bottom-0"
+        className="absolute left-1 bottom-0 z-50"
         onClick={() => setRows((prev) => prev + 1)}
       >
         Add 1000 more rows
       </Button>
       <table>
-        <thead>
+        <thead className="sticky top-0 bg-white">
           <tr className="text-center h-8">
             <th className="min-w-20"></th>
             {columns.map((column, index) => (
@@ -146,17 +155,18 @@ export default function Sheet() {
           </tr>
         </thead>
         <tbody>
-          {range(1, rows * 1000).map((cellRowValues, rowIndex) => (
+          {matrix.map((cellRowValues, rowIndex) => (
             <tr>
               <th
+                scope="row"
                 className={cn(
-                  "h-8",
+                  "h-8 sticky left-0 bg-white z-10",
                   rowIndex + 1 === selectedCell.row && "bg-blue-400"
                 )}
               >
                 {rowIndex + 1}
               </th>
-              {/* {cellRowValues.map((cellRowValue, colIndex) => (
+              {cellRowValues.map((cellRowValue, colIndex) => (
                 <td
                   onClick={() =>
                     handleCellClick({
@@ -203,7 +213,7 @@ export default function Sheet() {
                     cellRowValue
                   )}
                 </td>
-              ))} */}
+              ))}
             </tr>
           ))}
         </tbody>
