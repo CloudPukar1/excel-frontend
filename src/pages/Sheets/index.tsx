@@ -1,4 +1,3 @@
-import { useState } from "react";
 import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -11,7 +10,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,21 +29,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreVerticalIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { getSheetList } from "@/services/Sheet";
+import { ChangeEvent } from "react";
+import { debounce } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 export default function Sheets() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  const [search, setSearch] = useState("");
-
-  const retreiveSheets = async (search: string) => {
-    console.log("fetching");
-    const {
-      data: { data },
-    } = await axios.get(`http://localhost:3000/api/v1/sheet?search=${search}`);
-    console.log(data);
-    return data;
-  };
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  let search = searchParams.get("search") || "";
+  let page = searchParams.get("page") || 1;
 
   const duplicateSheet = async () => {
     const {
@@ -52,26 +59,46 @@ export default function Sheets() {
     return data;
   };
 
+  const getSheetDetails = async () => {
+    const {
+      data: { data },
+    } = await getSheetList({ limit: 15, search, page: +page });
+
+    return data;
+  };
+
+  const handleChange = debounce<ChangeEvent<HTMLInputElement>>(
+    ({ target: { value } }) => {
+      navigate({ search: value ? `?search=${value}` : "" });
+    },
+    500
+  );
+
+  const navigateToSheet = (sheetId: string, newTab: boolean = false) => {
+    const path = `/sheet/${sheetId}`;
+    newTab ? window.open(`#${path}`) : navigate(path);
+  };
+
   const {
-    data: sheets,
+    data: { sheets, pageMeta },
     error,
     isLoading,
   } = useQuery({
-    queryKey: ["sheetsData", { search }],
-    queryFn: () => retreiveSheets(search),
+    queryKey: ["sheetsData", { search, page }],
+    queryFn: getSheetDetails,
   });
 
   const { mutateAsync: deleteSheetMutation } = useMutation({
     mutationFn: deleteSheet,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sheetsData"] });
+      queryClient.invalidateQueries({ queryKey: ["sheets"] });
     },
   });
 
   const { mutateAsync: duplicateSheetMutation } = useMutation({
     mutationFn: duplicateSheet,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sheetsData"] });
+      queryClient.invalidateQueries({ queryKey: ["sheets"] });
     },
   });
 
@@ -79,23 +106,25 @@ export default function Sheets() {
   if (error) return <div>An error occurred: {error.message}</div>;
   return (
     <div className="container mx-auto">
-      <Input type="text" onChange={(e) => setSearch(e.target.value)} />
+      <Input type="text" onChange={handleChange} />
       <Table>
         <TableCaption>A list of your recent invoices.</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">S.N.</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Create at</TableHead>
+            <TableHead>Last Opened by me</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sheets.map((sheet, index) => (
-            <TableRow key={sheet._id}>
+          {sheets.map(({ title, _id, createdAt, lastOpenedAt }) => (
+            <TableRow key={_id} onClick={() => navigateToSheet(_id)}>
               <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>{sheet.name}</TableCell>
-              <TableCell>{sheet.createdAt}</TableCell>
+              <TableCell>{title}</TableCell>
+              <TableCell>{createdAt}</TableCell>
+              <TableCell>{lastOpenedAt}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -109,19 +138,19 @@ export default function Sheets() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-32">
-                    <Link to={`/sheet/${sheet._id}`}>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                    </Link>
                     <DropdownMenuItem
-                      onClick={() => duplicateSheetMutation(sheet._id)}
+                      onClick={() => navigateToSheet(_id, true)}
+                    >
+                      Open in new tab
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => duplicateSheetMutation(_id)}
                     >
                       Make a copy
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => deleteSheetMutation(sheet._id)}
-                    >
-                      Delete
+                    <DropdownMenuItem onClick={() => deleteSheetMutation(_id)}>
+                      Remove
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -130,6 +159,24 @@ export default function Sheets() {
           ))}
         </TableBody>
       </Table>
+      {pageMeta.totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious href="#" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">1</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext href="#" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }

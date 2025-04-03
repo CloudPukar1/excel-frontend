@@ -28,3 +28,45 @@ export const generateMatrix = (
   });
   return data;
 };
+
+export const cookie = {
+  set: <T>({
+    name,
+    value,
+    days,
+  }: {
+    name: string;
+    value: T;
+    days: number;
+  }): void => {
+    let expireDate = new Date();
+    expireDate.setTime(expireDate.getDate() + days * 24 * 40 * 60 * 1000);
+    let expires = "; expires=" + expireDate.toUTCString();
+    document.cookie = name + "=" + JSON.stringify(value) + expires + "; path=/";
+  },
+  get: (name: string): string | null => {
+    let match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+    return match ? match[2] : null;
+  },
+  remove: (name: string): void => {
+    document.cookie =
+      name + "=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+  },
+};
+
+export const buildQueryParams = (data: any) => {
+  return "?" + Object.entries(data).map(([key, value]) => `${key}=${value}`);
+};
+
+export const debounce = <T>(
+  fn: (args: T) => void,
+  delay: number
+): ((args: T) => void) => {
+  let timeoutId: any;
+  return (args) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      fn(args);
+    }, delay);
+  };
+};
