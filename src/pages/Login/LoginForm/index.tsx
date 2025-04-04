@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Eye, EyeClosed } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -22,9 +26,14 @@ export function LoginForm({
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const onSubmit = (data) => {
-    console.log(data);
+
+  const { login: loginUser } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const onSubmit = (data: any) => {
+    loginUser(data);
   };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -76,49 +85,53 @@ export function LoginForm({
                         message: "Invalid email format",
                       },
                     })}
-                    />
-                    {errors.email && <p>{errors.email.message}</p>}
+                  />
+                  {errors.email && <p>{errors.email.message}</p>}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
-                    <a
-                      href="#"
-                      className="ml-auto text-sm underline-offset-4 hover:underline"
-                    >
-                      Forgot your password?
-                    </a>
                   </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...register("password", {
-                      required: "password is requred",
-                      pattern: {
-                        value: /^(?=.*[A-Z].*[A-Z])(?=.*[!@#$&*])(?=.*[0-9].*[0-9])(?=.*[a-z].*[a-z].*[a-z]).{8}$/,
-                        message: "password must be at least 6 characters",
-                      },
-                    })}
-                  />
-                  {errors.password && <p>{errors.password?.message}</p>}
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      {...register("password", {
+                        required: "password is requred",
+                      })}
+                    />
+                    <div className="absolute right-2 top-2 cursor-pointer">
+                      {showPassword ? (
+                        <Eye size={20} onClick={() => setShowPassword(false)} />
+                      ) : (
+                        <EyeClosed
+                          size={20}
+                          onClick={() => setShowPassword(true)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {errors.password && <p>{errors.password.message}</p>}
                 </div>
+                {/* TODO: Remember me */}
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
               </div>
               <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
-                  Sign up
-                </a>
+                Don't have account?{" "}
+                <Link to="/register" className="underline underline-offset-4">
+                  Register
+                </Link>
               </div>
             </div>
           </form>
         </CardContent>
       </Card>
       <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our{" "}
+        <Link to="/terms-of-services">Terms of Service</Link> and{" "}
+        <a href="#">Privacy Policy</a>.
       </div>
     </div>
   );

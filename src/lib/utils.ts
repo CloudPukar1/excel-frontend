@@ -40,12 +40,12 @@ export const cookie = {
     days: number;
   }): void => {
     let expireDate = new Date();
-    expireDate.setTime(expireDate.getDate() + days * 24 * 40 * 60 * 1000);
-    let expires = "; expires=" + expireDate.toUTCString();
+    expireDate.setTime(expireDate.getTime() + days * 24 * 60 * 60 * 1000);
+    const expires = "; expires=" + expireDate.toUTCString();
     document.cookie = name + "=" + JSON.stringify(value) + expires + "; path=/";
   },
   get: (name: string): string | null => {
-    let match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+    let match = document.cookie.match("(^| )" + name + "=([^;]+)");
     return match ? match[2] : null;
   },
   remove: (name: string): void => {

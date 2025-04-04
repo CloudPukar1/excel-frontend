@@ -1,4 +1,6 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Outlet } from "react-router-dom";
+
+import { AuthProvider } from "../hooks/useAuth";
 
 import Login from "@/pages/Login";
 import Sheets from "@/pages/Sheets";
@@ -10,27 +12,37 @@ import PageNotFound from "@/pages/PageNotFound";
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Login />,
-  },
-  {
-    path: "/register",
-    element: <Register />,
-  },
-  {
-    path: "/",
-    element: <ProtectedRoute />,
+    path: "",
+    element: (
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    ),
     children: [
       {
-        path: "sheet",
+        path: "/login",
+        element: <Login />,
+      },
+      {
+        path: "/register",
+        element: <Register />,
+      },
+      {
+        path: "/",
+        element: <ProtectedRoute />,
         children: [
           {
-            path: "",
-            element: <Sheets />,
-          },
-          {
-            path: ":sheetId",
-            element: <Sheet />,
+            path: "sheet",
+            children: [
+              {
+                path: "",
+                element: <Sheets />,
+              },
+              {
+                path: ":sheetId",
+                element: <Sheet />,
+              },
+            ],
           },
         ],
       },
