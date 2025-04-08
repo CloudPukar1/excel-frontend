@@ -10,3 +10,10 @@ export const getSheetList = (params: {
   return api.get(`/sheet${buildQueryParams(params)}`);
 };
 
+export const removeSheetById = (sheetId: string) => {
+  return api.delete(`/sheet/${sheetId}`);
+};
+
+export const createSheet = () => {
+  return api.post(`/sheet`)
+}

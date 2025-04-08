@@ -1,6 +1,3 @@
-import axios from "axios";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
 import {
   Table,
   TableBody,
@@ -30,41 +27,83 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreVerticalIcon } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getSheetList } from "@/services/Sheet";
-import { ChangeEvent } from "react";
+import { createSheet, getSheetList, removeSheetById } from "@/services/Sheet";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { debounce } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { toast } from "react-hot-toast";
+import { ISheetList } from "@/types/Sheets";
 
 export default function Sheets() {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const containerRef = useRef<HTMLTableElement>(null);
 
+  const [sheets, setSheets] = useState<ISheetList>([]);
+  const [pageMeta, setPageMeta] = useState({} as any);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  let search = searchParams.get("search") || "";
-  let page = searchParams.get("page") || 1;
 
-  const duplicateSheet = async () => {
-    const {
-      data: { data },
-    } = await axios.delete(`http://localhost:3000/api/v1/sheet/${sheetId}`);
-    return data;
-  };
-
-  const deleteSheet = async (sheetId: string) => {
-    console.log("deleting");
-    const {
-      data: { data },
-    } = await axios.delete(`http://localhost:3000/api/v1/sheet/${sheetId}`);
-    return data;
-  };
+  const search = searchParams.get("search") || "";
+  const page = searchParams.get("page") || 1;
 
   const getSheetDetails = async () => {
-    const {
-      data: { data },
-    } = await getSheetList({ limit: 15, search, page: +page });
+    try {
+      const {
+        data: {
+          data: { sheets, pageMeta },
+        },
+      } = await getSheetList({ limit: 15, search, page: +page });
+      setSheets(sheets);
+      setPageMeta(pageMeta);
+    } catch (error: any) {
+      toast.error(error?.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return data;
+  const handleCreateDocument = async () => {
+    try {
+      const {
+        data: {
+          data: { sheetId },
+        },
+      } = await createSheet();
+      navigate(`/sheet/${sheetId}`);
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
+  };
+
+  const handleDeleteDocument = async (sheetId: string) => {
+    if (!window.confirm("Are you sure you want to delete this sheet?")) return;
+
+    try {
+      await removeSheetById(sheetId);
+      getSheetDetails();
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (!containerRef.current) return;
+
+    navigate({
+      search:
+        page !== 0
+          ? `?page=${page + 1}${search ? `&search=${search}` : ""}`
+          : "",
+    });
+
+    containerRef.current.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const navigateToSheet = (sheetId: string, newTab: boolean = false) => {
+    const path = `/sheet/${sheetId}`;
+    newTab ? window.open(`#${path}`) : navigate(path);
   };
 
   const handleChange = debounce<ChangeEvent<HTMLInputElement>>(
@@ -74,36 +113,14 @@ export default function Sheets() {
     500
   );
 
-  const navigateToSheet = (sheetId: string, newTab: boolean = false) => {
-    const path = `/sheet/${sheetId}`;
-    newTab ? window.open(`#${path}`) : navigate(path);
-  };
+  useEffect(() => {
+    getSheetDetails();
+  }, [search, page]);
 
-  const {
-    data: { sheets, pageMeta },
-    error,
-    isLoading,
-  } = useQuery({
-    queryKey: ["sheetsData", { search, page }],
-    queryFn: getSheetDetails,
-  });
+  if (isLoading) {
+    return "Loading";
+  }
 
-  const { mutateAsync: deleteSheetMutation } = useMutation({
-    mutationFn: deleteSheet,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sheets"] });
-    },
-  });
-
-  const { mutateAsync: duplicateSheetMutation } = useMutation({
-    mutationFn: duplicateSheet,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sheets"] });
-    },
-  });
-
-  if (isLoading) return <div>Fetching sheet...</div>;
-  if (error) return <div>An error occurred: {error.message}</div>;
   return (
     <div className="container mx-auto">
       <Input type="text" onChange={handleChange} />
@@ -111,7 +128,6 @@ export default function Sheets() {
         <TableCaption>A list of your recent invoices.</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">S.N.</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Create at</TableHead>
             <TableHead>Last Opened by me</TableHead>
@@ -121,7 +137,6 @@ export default function Sheets() {
         <TableBody>
           {sheets.map(({ title, _id, createdAt, lastOpenedAt }) => (
             <TableRow key={_id} onClick={() => navigateToSheet(_id)}>
-              <TableCell className="font-medium">{index + 1}</TableCell>
               <TableCell>{title}</TableCell>
               <TableCell>{createdAt}</TableCell>
               <TableCell>{lastOpenedAt}</TableCell>
@@ -143,13 +158,8 @@ export default function Sheets() {
                     >
                       Open in new tab
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => duplicateSheetMutation(_id)}
-                    >
-                      Make a copy
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => deleteSheetMutation(_id)}>
+                    <DropdownMenuItem onClick={() => handleDeleteDocument(_id)}>
                       Remove
                     </DropdownMenuItem>
                   </DropdownMenuContent>
