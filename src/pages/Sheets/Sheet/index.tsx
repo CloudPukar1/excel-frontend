@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 
-import { cn, generateMatrix, range } from "@/lib/utils";
+import { cn, generateMatrix } from "@/lib/utils";
 import { initialColumns } from "@/lib/constants";
 
 import { Input } from "@/components/ui/input";
-import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface ICell {
@@ -15,50 +12,6 @@ interface ICell {
 }
 
 export default function Sheet() {
-  const { sheetId } = useParams();
-  const queryClient = useQueryClient();
-
-  const [search, setSearch] = useState("");
-
-  const retreiveSheet = async (search: string) => {
-    console.log("fetching");
-    const {
-      data: { data },
-    } = await axios.get(
-      `http://localhost:3000/api/v1/sheet/${sheetId}?search=${search}`
-    );
-    setCellValues(data.data);
-    return data.data;
-  };
-
-  const updateSheet = async () => {
-    const sheetData = JSON.parse(localStorage.getItem("cellValues")!);
-    const {
-      data: { data },
-    } = await axios.put(
-      `http://localhost:3000/api/v1/sheet/${sheetId}`,
-      sheetData
-    );
-    console.log("sheet data polled");
-    return data;
-  };
-
-  const {
-    data: sheets,
-    error,
-    isLoading,
-  } = useQuery({
-    queryKey: ["sheetData", { search }],
-    queryFn: () => retreiveSheet(search),
-  });
-
-  const { mutateAsync: updateSheetMutation } = useMutation({
-    mutationFn: updateSheet,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sheetData"] });
-    },
-  });
-
   const [selectedCell, setSelectedCell] = useState<ICell>({
     row: 1,
     col: 1,
@@ -119,13 +72,8 @@ export default function Sheet() {
     );
   }, [rows, cols]);
 
-  if (isLoading) return <div>Fetching sheets...</div>;
-  if (error) return <div>An error occurred: {error.message}</div>;
-
-  console.log(matrix);
   return (
     <div>
-      <Input type="text" onChange={(e) => setSearch(e.target.value)} />
       <Button
         className="absolute right-1 top-0 z-50"
         onClick={() => setCols((prev) => prev + 1)}

@@ -15,5 +15,5 @@ export const removeSheetById = (sheetId: string) => {
 };
 
 export const createSheet = () => {
-  return api.post(`/sheet`)
-}
+  return api.post(`/sheet`);
+};

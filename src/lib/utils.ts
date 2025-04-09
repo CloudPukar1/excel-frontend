@@ -70,3 +70,7 @@ export const debounce = <T>(
     }, delay);
   };
 };
+
+export const getStaticUrl = (path: string) => {
+  return path;
+};

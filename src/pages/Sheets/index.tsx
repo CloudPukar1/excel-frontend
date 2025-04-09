@@ -29,24 +29,24 @@ import { MoreVerticalIcon } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createSheet, getSheetList, removeSheetById } from "@/services/Sheet";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { debounce } from "@/lib/utils";
+import { debounce, getStaticUrl } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import { ISheetList } from "@/types/Sheets";
 
 export default function Sheets() {
   const containerRef = useRef<HTMLTableElement>(null);
-
-  const [sheets, setSheets] = useState<ISheetList>([]);
-  const [pageMeta, setPageMeta] = useState({} as any);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [pageMeta, setPageMeta] = useState({} as any);
+  const [sheets, setSheets] = useState<ISheetList>([]);
+  const [page, setPage] = useState(+(searchParams.get("page") || 1));
+
+  const navigate = useNavigate();
+
   const search = searchParams.get("search") || "";
-  const page = searchParams.get("page") || 1;
 
   const getSheetDetails = async () => {
     try {
@@ -88,22 +88,9 @@ export default function Sheets() {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    if (!containerRef.current) return;
-
-    navigate({
-      search:
-        page !== 0
-          ? `?page=${page + 1}${search ? `&search=${search}` : ""}`
-          : "",
-    });
-
-    containerRef.current.scrollIntoView({ behavior: "smooth" });
-  };
-
   const navigateToSheet = (sheetId: string, newTab: boolean = false) => {
     const path = `/sheet/${sheetId}`;
-    newTab ? window.open(`#${path}`) : navigate(path);
+    newTab ? window.open(path) : navigate(path);
   };
 
   const handleChange = debounce<ChangeEvent<HTMLInputElement>>(
@@ -117,6 +104,20 @@ export default function Sheets() {
     getSheetDetails();
   }, [search, page]);
 
+  useEffect(() => {
+    const handlePageChange = (page: number) => {
+      if (!containerRef.current) return;
+
+      navigate({
+        search:
+          page !== 0 ? `?page=${page}${search ? `&search=${search}` : ""}` : "",
+      });
+
+      containerRef.current.scrollIntoView({ behavior: "smooth" });
+    };
+    handlePageChange(page);
+  }, [page]);
+
   if (isLoading) {
     return "Loading";
   }
@@ -124,7 +125,7 @@ export default function Sheets() {
   return (
     <div className="container mx-auto">
       <Input type="text" onChange={handleChange} />
-      <Table>
+      <Table ref={containerRef}>
         <TableCaption>A list of your recent invoices.</TableCaption>
         <TableHeader>
           <TableRow>
@@ -136,7 +137,11 @@ export default function Sheets() {
         </TableHeader>
         <TableBody>
           {sheets.map(({ title, _id, createdAt, lastOpenedAt }) => (
-            <TableRow key={_id} onClick={() => navigateToSheet(_id)}>
+            <TableRow
+              className="cursor-pointer"
+              key={_id}
+              onClick={() => navigateToSheet(_id)}
+            >
               <TableCell>{title}</TableCell>
               <TableCell>{createdAt}</TableCell>
               <TableCell>{lastOpenedAt}</TableCell>
@@ -154,12 +159,21 @@ export default function Sheets() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-32">
                     <DropdownMenuItem
-                      onClick={() => navigateToSheet(_id, true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateToSheet(_id, true);
+                      }}
                     >
                       Open in new tab
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleDeleteDocument(_id)}>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDocument(_id);
+                      }}
+                    >
                       Remove
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -169,24 +183,40 @@ export default function Sheets() {
           ))}
         </TableBody>
       </Table>
-      {pageMeta.totalPages > 1 && (
+      {true && (
         <Pagination>
           <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious href="#" />
-            </PaginationItem>
-            <PaginationItem>
+            {page > 1 && (
+              <PaginationItem
+                className="cursor-pointer"
+                onClick={() => setPage((prev) => prev - 1)}
+              >
+                <PaginationPrevious />
+              </PaginationItem>
+            )}
+            {/* <PaginationItem>
               <PaginationLink href="#">1</PaginationLink>
-            </PaginationItem>
+            </PaginationItem> */}
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
-            <PaginationItem>
-              <PaginationNext href="#" />
-            </PaginationItem>
+            {page < 5 && (
+              <PaginationItem
+                className="cursor-pointer"
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                <PaginationNext />
+              </PaginationItem>
+            )}
           </PaginationContent>
         </Pagination>
       )}
+      <button
+        className="cursor-pointer fixed flex items-center justify-center shadow-[0px_2px_10px_rgba(0,0,0,0.3),0px_0px_1px_rgba(0,0,0,0.1),inset_0px_1px_0px_rgba(255,255,255,0.25),inset_0px_-1px_0px_rgba(0,0,0,0.15)] w-14 h-14 bg-white rounded-[50%] border-[none] right-[25px] bottom-[30px]"
+        onClick={handleCreateDocument}
+      >
+        <img className="w-6 h-6" src={getStaticUrl("/plus.svg")} />
+      </button>
     </div>
   );
 }

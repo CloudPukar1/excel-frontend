@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { loginUser, registerUser } from "@/services/User";
+import toast from "react-hot-toast";
 
 interface IAuthContext {
   user?: IUser;
@@ -35,29 +36,36 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   const handleAuthResponse = (token: string) => {
-    console.log(token);
-    debugger
     cookie.set({ name: "auth_token", value: token, days: 14 });
     setUser(jwtDecode<IUser>(token));
     navigate("/sheet");
   };
 
   const login = async (data: ILogin) => {
-    const {
-      data: {
-        data: { token },
-      },
-    } = await loginUser(data);
-    handleAuthResponse(token);
+    try {
+      const {
+        data: {
+          data: { token },
+        },
+      } = await loginUser(data);
+      handleAuthResponse(token);
+    } catch (error: any) {
+      toast.error(error?.message);
+      if (error.message === "User not exist") navigate("/login");
+    }
   };
 
   const register = async (data: IRegister) => {
-    const {
-      data: {
-        data: { token },
-      },
-    } = await registerUser(data);
-    handleAuthResponse(token);
+    try {
+      const {
+        data: {
+          data: { token },
+        },
+      } = await registerUser(data);
+      handleAuthResponse(token);
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
   };
 
   useEffect(() => {
