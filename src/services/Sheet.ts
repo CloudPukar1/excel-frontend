@@ -1,3 +1,4 @@
+import { ISheetDetail } from "@/types/Sheets";
 import api from "./api";
 
 import { buildQueryParams } from "@/lib/utils";
@@ -16,4 +17,11 @@ export const removeSheetById = (sheetId: string) => {
 
 export const createSheet = () => {
   return api.post(`/sheet`);
+};
+
+export const updateSheetById = (
+  sheetId: string,
+  data: Partial<ISheetDetail>
+) => {
+  return api.put(`/sheet/${sheetId}`, data);
 };

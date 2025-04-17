@@ -5,7 +5,7 @@ import { AuthProvider } from "../hooks/useAuth";
 import Login from "@/pages/Login";
 import Sheets from "@/pages/Sheets";
 
-import Sheet from "@/pages/Sheets/Sheet";
+import Sheet from "@/pages/Sheets/SheetDetails";
 import Register from "@/pages/Register";
 import ProtectedRoute from "./ProtectedRoute";
 import PageNotFound from "@/pages/PageNotFound";
