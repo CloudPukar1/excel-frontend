@@ -7,7 +7,7 @@ import BottomBar from "./BottomBar";
 
 export default function Sheet() {
   const { isSheetLoading } = useSheet();
-
+  console.log("here");
   return (
     <div className="w-full h-full">
       {isSheetLoading ? (

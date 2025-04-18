@@ -25,3 +25,7 @@ export const updateSheetById = (
 ) => {
   return api.put(`/sheet/${sheetId}`, data);
 };
+
+export const getSheetById = (sheetId: string) => {
+  return api.get(`/sheet/${sheetId}`);
+};
