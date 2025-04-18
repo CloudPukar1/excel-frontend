@@ -1,5 +1,6 @@
 import { IRowDirection, IColumnDirection } from "@/types/Sheets";
-import { Copy, Divide, ClipboardPaste, Plus, Delete } from "lucide-react";
+import { Copy, ClipboardPaste, Plus, Delete } from "lucide-react";
+import { MenubarSeparator } from "@/components/ui/menubar";
 
 type IContextMenuProps = {
   onCopy: () => void;
@@ -41,7 +42,7 @@ export default function ContextMenu({
           </span>
           <span>Ctrl + V</span>
         </button>
-        <Divide />
+        <MenubarSeparator />
         <button
           className="flex justify-between items-center h-8 hover:bg-[#F1F3F4] text-mild-black font-medium px-3"
           onClick={() => onInsertRow("above")}
@@ -60,7 +61,7 @@ export default function ContextMenu({
             Insert one row below
           </span>
         </button>
-        <Divide />
+        <MenubarSeparator />
         <button
           className="flex justify-between items-center h-8 hover:bg-[#F1F3F4] text-mild-black font-medium px-3"
           onClick={() => onInsertColumn("left")}
@@ -79,7 +80,7 @@ export default function ContextMenu({
             Insert one column right
           </span>
         </button>
-        <Divide />
+        <MenubarSeparator />
         <button
           className="flex justify-between items-center h-8 hover:bg-[#F1F3F4] text-mild-black font-medium px-3"
           onClick={onDeleteRow}

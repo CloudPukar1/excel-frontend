@@ -1,3 +1,24 @@
+type IRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type IRow = {
+  rowId: number;
+} & IRect;
+
+type IColumn = {
+  columnId: number;
+} & IRect;
+
+type ICell = {
+  cellId: number;
+  rowId: number;
+  columnId: number;
+} & IRect;
+
 export type ISheetGrid = {
   _id: string;
   title: string;
@@ -21,3 +42,9 @@ export type ISheetList = {
 
 export type IRowDirection = "above" | "below";
 export type IColumnDirection = "left" | "right";
+
+export type IGrid = {
+  rows: IRow[];
+  columns: IColumn[];
+  cells: ICell[];
+};

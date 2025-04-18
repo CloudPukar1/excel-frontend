@@ -1,11 +1,13 @@
 import { createGrid, removeGridById } from "@/services/Grid";
+import { deleteColumn, deleteRow } from "@/services/Cell";
 import { getSheetById, updateSheetById } from "@/services/Sheet";
-import { ISheetDetail } from "@/types/Sheets";
+import { IGrid, ISheetDetail } from "@/types/Sheets";
 import {
   createContext,
   PropsWithChildren,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import toast from "react-hot-toast";
@@ -35,10 +37,33 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   const gridId = searchParams.get("gridId");
 
   const [isSheetLoading, setIsSheetLoading] = useState(true);
-  const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
-  const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
-  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const [selectedCellId, setSelectedCellId] = useState<number | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+  const [selectedColumnId, setSelectedColumnId] = useState<number | null>(null);
   const [sheetDetail, setSheetDetail] = useState<ISheetDetail | null>(null);
+
+  const [grid] = useState<IGrid>({
+    cells: [],
+    columns: [],
+    rows: [],
+  });
+
+  const selectedCell = useMemo(() => {
+    const cell = grid.cells.find(({ cellId }) => cellId === selectedCellId);
+    return cell || null;
+  }, [selectedCellId]);
+
+  const selectedRow = useMemo(() => {
+    const row = grid.rows.find(({ rowId }) => rowId === selectedRowId);
+    return row || null;
+  }, [selectedRowId]);
+
+  const selectedColumn = useMemo(() => {
+    const column = grid.columns.find(
+      ({ columnId }) => columnId === selectedColumnId
+    );
+    return column || null;
+  }, [selectedColumnId]);
 
   const handleTitleChange = async (title: string) => {
     if (!sheetId) {
@@ -123,16 +148,30 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   const handleCopyCell: ISheetContext["handleCopyCell"] = async () => {};
   const handleDeleteRow: ISheetContext["handleDeleteRow"] = async () => {
     if (!gridId || !window.confirm("Are you sure to delete the row?")) return;
-    const rowId = selectedCell;
+    const rowId = selectedCell?.rowId || selectedRow?.rowId;
 
+    if (!rowId) return;
     try {
+      await deleteRow(gridId, rowId);
     } catch (error: any) {
       toast.error(error?.message);
     }
   };
   const handleInsertRow: ISheetContext["handleInsertRow"] = async () => {};
-  const handleDeleteColumn: ISheetContext["handleDeleteColumn"] =
-    async () => {};
+  const handleDeleteColumn: ISheetContext["handleDeleteColumn"] = async () => {
+    if (!gridId || !window.confirm("Are you sure to delete the column?"))
+      return;
+
+    const columnId = selectedCell?.columnId || selectedColumn?.columnId;
+
+    if (!columnId) return;
+
+    try {
+      await deleteColumn(gridId, columnId);
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
+  };
   const handleInsertColumn: ISheetContext["handleInsertColumn"] =
     async () => {};
 
