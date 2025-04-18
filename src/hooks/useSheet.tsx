@@ -1,4 +1,4 @@
-import { createGrid } from "@/services/Grid";
+import { createGrid, removeGridById } from "@/services/Grid";
 import { getSheetById, updateSheetById } from "@/services/Sheet";
 import { ISheetDetail } from "@/types/Sheets";
 import {
@@ -15,6 +15,13 @@ type ISheetContext = {
   isSheetLoading: boolean;
   sheetDetail: ISheetDetail | null;
   handleCreateGrid: () => void;
+  handleDeleteGrid: (index: number, gridId: string) => void;
+  handlePasteCell: () => void;
+  handleCopyCell: () => void;
+  handleDeleteRow: () => void;
+  handleInsertRow: () => void;
+  handleDeleteColumn: () => void;
+  handleInsertColumn: () => void;
   handleTitleChange: (title: string) => void;
 };
 
@@ -28,6 +35,9 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   const gridId = searchParams.get("gridId");
 
   const [isSheetLoading, setIsSheetLoading] = useState(true);
+  const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
+  const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [sheetDetail, setSheetDetail] = useState<ISheetDetail | null>(null);
 
   const handleTitleChange = async (title: string) => {
@@ -70,7 +80,7 @@ export default function SheetProvider({ children }: PropsWithChildren) {
     }
   };
 
-  const handleCreateGrid = async () => {
+  const handleCreateGrid: ISheetContext["handleCreateGrid"] = async () => {
     if (!sheetDetail) return;
 
     try {
@@ -86,6 +96,46 @@ export default function SheetProvider({ children }: PropsWithChildren) {
     }
   };
 
+  const handleDeleteGrid: ISheetContext["handleDeleteGrid"] = async (
+    index,
+    gridId
+  ) => {
+    if (!sheetDetail || !window.confirm("Are you sure to delete the grid?"))
+      return;
+
+    try {
+      await removeGridById(gridId);
+      const sheetData = { ...sheetDetail };
+      sheetData.grids.splice(index, 1);
+      setSheetDetail(sheetData);
+      navigate({
+        search:
+          sheetData.grids.length === 0
+            ? "/sheet/list"
+            : `gridId=${sheetData.grids[sheetData.grids.length - 1]._id}`,
+      });
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
+  };
+
+  const handlePasteCell: ISheetContext["handlePasteCell"] = async () => {};
+  const handleCopyCell: ISheetContext["handleCopyCell"] = async () => {};
+  const handleDeleteRow: ISheetContext["handleDeleteRow"] = async () => {
+    if (!gridId || !window.confirm("Are you sure to delete the row?")) return;
+    const rowId = selectedCell;
+
+    try {
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
+  };
+  const handleInsertRow: ISheetContext["handleInsertRow"] = async () => {};
+  const handleDeleteColumn: ISheetContext["handleDeleteColumn"] =
+    async () => {};
+  const handleInsertColumn: ISheetContext["handleInsertColumn"] =
+    async () => {};
+
   useEffect(() => {
     getSheetDetails();
   }, []);
@@ -95,7 +145,14 @@ export default function SheetProvider({ children }: PropsWithChildren) {
       value={{
         sheetDetail,
         isSheetLoading,
+        handlePasteCell,
+        handleCopyCell,
+        handleDeleteRow,
+        handleInsertRow,
+        handleDeleteColumn,
+        handleInsertColumn,
         handleCreateGrid,
+        handleDeleteGrid,
         handleTitleChange,
       }}
     >

@@ -10,7 +10,6 @@ import {
   MenubarItem,
   MenubarMenu,
   MenubarSeparator,
-  MenubarShortcut,
   MenubarSub,
   MenubarSubContent,
   MenubarSubTrigger,
@@ -21,7 +20,7 @@ import { useSheet } from "@/hooks/useSheet";
 // import { useLocation } from "react-router-dom";
 
 export default function BottomBar() {
-  const { sheetDetail, handleCreateGrid } = useSheet();
+  const { sheetDetail, handleCreateGrid, handleDeleteGrid } = useSheet();
   // const location = useLocation();
   // const searchParams = new URLSearchParams(location.search);
   // const gridId = searchParams.get("gridId");
@@ -44,11 +43,11 @@ export default function BottomBar() {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <Menubar>
-          {grids.map(({ _id, title, color = "transparent" }) => (
+        <Menubar className="border-none">
+          {grids.map(({ _id, title, color = "transparent" }, index) => (
             <MenubarMenu key={_id}>
               <MenubarTrigger
-                className="cursor-pointer"
+                className="cursor-pointer p-2 border"
                 style={{
                   backgroundColor: color,
                 }}
@@ -56,26 +55,24 @@ export default function BottomBar() {
                 {title}
               </MenubarTrigger>
               <MenubarContent>
-                <MenubarItem>
-                  New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+                <MenubarItem onClick={() => handleDeleteGrid(index, _id)}>
+                  Delete
                 </MenubarItem>
-                <MenubarItem>
-                  New Window <MenubarShortcut>⌘N</MenubarShortcut>
-                </MenubarItem>
-                <MenubarItem disabled>New Incognito Window</MenubarItem>
-                <MenubarSeparator />
+                <MenubarItem>Duplicate</MenubarItem>
                 <MenubarSub>
-                  <MenubarSubTrigger>Share</MenubarSubTrigger>
+                  <MenubarSubTrigger>Copy to</MenubarSubTrigger>
                   <MenubarSubContent>
-                    <MenubarItem>Email link</MenubarItem>
-                    <MenubarItem>Messages</MenubarItem>
-                    <MenubarItem>Notes</MenubarItem>
+                    <MenubarItem>New spreadsheet</MenubarItem>
+                    <MenubarItem>Existing spreadsheet</MenubarItem>
                   </MenubarSubContent>
                 </MenubarSub>
+                <MenubarItem>Rename</MenubarItem>
+                <MenubarItem>Change color</MenubarItem>
+                <MenubarItem>Protect sheet</MenubarItem>
+                <MenubarItem>View Comments</MenubarItem>
                 <MenubarSeparator />
-                <MenubarItem>
-                  Print... <MenubarShortcut>⌘P</MenubarShortcut>
-                </MenubarItem>
+                <MenubarItem>Move right</MenubarItem>
+                <MenubarItem>Move left</MenubarItem>
               </MenubarContent>
             </MenubarMenu>
           ))}

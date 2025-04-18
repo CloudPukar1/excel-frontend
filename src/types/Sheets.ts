@@ -18,3 +18,6 @@ export type ISheetList = {
   updatedAt: string;
   lastOpenedAt: string;
 }[];
+
+export type IRowDirection = "above" | "below";
+export type IColumnDirection = "left" | "right";
