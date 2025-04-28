@@ -13,7 +13,7 @@ type IColumn = {
   columnId: number;
 } & IRect;
 
-type ICell = {
+export type ICell = {
   cellId: number;
   rowId: number;
   columnId: number;
@@ -47,4 +47,11 @@ export type IGrid = {
   rows: IRow[];
   columns: IColumn[];
   cells: ICell[];
+};
+
+export type ICellProps = {
+  _id: string;
+  text?: string;
+  content?: any[];
+  background?: string;
 };

@@ -1,10 +1,12 @@
 import { createGrid, removeGridById } from "@/services/Grid";
 import { deleteColumn, deleteRow } from "@/services/Cell";
 import { getSheetById, updateSheetById } from "@/services/Sheet";
-import { IGrid, ISheetDetail } from "@/types/Sheets";
+import { ICell, IGrid, ISheetDetail } from "@/types/Sheets";
 import {
   createContext,
+  Dispatch,
   PropsWithChildren,
+  SetStateAction,
   useContext,
   useEffect,
   useMemo,
@@ -14,6 +16,7 @@ import toast from "react-hot-toast";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 type ISheetContext = {
+  editCell: ICell | null;
   isSheetLoading: boolean;
   sheetDetail: ISheetDetail | null;
   handleCreateGrid: () => void;
@@ -25,6 +28,7 @@ type ISheetContext = {
   handleDeleteColumn: () => void;
   handleInsertColumn: () => void;
   handleTitleChange: (title: string) => void;
+  setEditCell: Dispatch<SetStateAction<ICell | null>>;
 };
 
 const SheetContext = createContext({} as ISheetContext);
@@ -40,6 +44,7 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   const [selectedCellId, setSelectedCellId] = useState<number | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   const [selectedColumnId, setSelectedColumnId] = useState<number | null>(null);
+  const [editCell, setEditCell] = useState<ICell | null>(null);
   const [sheetDetail, setSheetDetail] = useState<ISheetDetail | null>(null);
 
   const [grid] = useState<IGrid>({
@@ -182,6 +187,8 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   return (
     <SheetContext.Provider
       value={{
+        editCell,
+        setEditCell,
         sheetDetail,
         isSheetLoading,
         handlePasteCell,
