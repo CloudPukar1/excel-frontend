@@ -1,11 +1,14 @@
-import { createGrid, removeGridById } from "@/services/Grid";
+import { createGrid, getGridById, removeGridById } from "@/services/Grid";
 import { deleteColumn, deleteRow } from "@/services/Cell";
 import { getSheetById, updateSheetById } from "@/services/Sheet";
 import {
   ICell,
   ICellDetail,
+  IColumn,
   IColumnDetail,
   IGrid,
+  IRect,
+  IRow,
   IRowDetail,
   ISheetDetail,
 } from "@/types/Sheets";
@@ -24,9 +27,16 @@ import toast from "react-hot-toast";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 type ISheetContext = {
+  scale: number;
+  copiedCell: ICell | null;
   editCell: ICell | null;
   isSheetLoading: boolean;
+  isGridLoading: boolean;
   sheetDetail: ISheetDetail | null;
+  contextMenuRect: Pick<IRect, "x" | "y"> | null;
+  selectedCell: ICell | null;
+  selectedRow: IRow | null;
+  selectedColumn: IColumn | null;
   getCellById: (cellId?: string) => ICellDetail | undefined;
   handleCreateGrid: () => void;
   handleDeleteGrid: (index: number, gridId: string) => void;
@@ -38,6 +48,7 @@ type ISheetContext = {
   handleInsertColumn: () => void;
   handleTitleChange: (title: string) => void;
   setEditCell: Dispatch<SetStateAction<ICell | null>>;
+  setContextMenuRect: Dispatch<SetStateAction<Pick<IRect, "x" | "y"> | null>>;
 };
 
 const SheetContext = createContext({} as ISheetContext);
@@ -50,17 +61,26 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   const gridId = searchParams.get("gridId");
 
   const [isSheetLoading, setIsSheetLoading] = useState(true);
-  const [selectedCellId, setSelectedCellId] = useState<number | null>(null);
+  const [isGridLoading, setIsGridLoading] = useState(true);
+  const [scale, setScale] = useState(1);
+  const [contextMenuRect, setContextMenuRect] =
+    useState<ISheetContext["contextMenuRect"]>(null);
+  const [activeHighLightIndex, setActiveHighLightIndex] = useState<
+    number | null
+  >(null);
+  const [highLightCells, setHighLightCells] = useState<string[]>([]);
+  const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   const [selectedColumnId, setSelectedColumnId] = useState<number | null>(null);
   const [editCell, setEditCell] = useState<ICell | null>(null);
   const [sheetDetail, setSheetDetail] = useState<ISheetDetail | null>(null);
 
-  const [grid] = useState<IGrid>({
+  const [grid, setGrid] = useState<IGrid>({
     cells: [],
     columns: [],
     rows: [],
   });
+  const [copyCellId, setCopyCellId] = useState<string | null>(null);
 
   const rowDetails = useRef<Map<string, IRowDetail>>(new Map());
   const columnDetails = useRef<Map<string, IColumnDetail>>(new Map());
@@ -72,10 +92,15 @@ export default function SheetProvider({ children }: PropsWithChildren) {
     return cell || null;
   }, [selectedCellId]);
 
+  const copiedCell = useMemo(() => {
+    const cell = grid.cells.find(({ cellId }) => cellId === copyCellId);
+    return cell || null;
+  }, [grid.cells, copyCellId]);
+
   const selectedRow = useMemo(() => {
     const row = grid.rows.find(({ rowId }) => rowId === selectedRowId);
     return row || null;
-  }, [selectedRowId]);
+  }, [grid.cells, selectedRowId]);
 
   const selectedColumn = useMemo(() => {
     const column = grid.columns.find(
@@ -121,6 +146,43 @@ export default function SheetProvider({ children }: PropsWithChildren) {
       setIsSheetLoading(false);
     } catch (error: any) {
       toast.error(error?.message);
+    }
+  };
+
+  const resetGrid = () => {
+    setIsGridLoading(true);
+    setEditCell(null);
+    setContextMenuRect(null);
+    setSelectedCellId(null);
+    setSelectedColumnId(null);
+    setSelectedRowId(null);
+    setActiveHighLightIndex(null);
+    setHighLightCells([]);
+    setGrid({ cells: [], columns: [], rows: [] });
+  };
+
+  const getGridDetails = async () => {
+    if (!gridId) return;
+
+    resetGrid();
+
+    try {
+      const {} = await getGridById(gridId);
+      setGrid;
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
+  };
+
+  const setCellById = (cell: ICellDetail) => {
+    const cellId = `${cell.columnId}, ${cell.rowId}`;
+    cellIds.current.set(cellId, cell._id);
+    cellDetails.current.set(cell._id, cell);
+  };
+
+  const setCellDetails = (cells: ICellDetail[]) => {
+    for (let cell of cells) {
+      setCellById(cell);
     }
   };
 
@@ -204,14 +266,26 @@ export default function SheetProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     getSheetDetails();
-  }, []);
+  }, [sheetId]);
+
+  useEffect(() => {
+    getGridDetails();
+  }, [gridId]);
 
   return (
     <SheetContext.Provider
       value={{
+        scale,
+        selectedCell,
+        contextMenuRect,
+        setContextMenuRect,
         editCell,
+        copiedCell,
         setEditCell,
+        selectedRow,
+        selectedColumn,
         sheetDetail,
+        isGridLoading,
         isSheetLoading,
         getCellById,
         handlePasteCell,

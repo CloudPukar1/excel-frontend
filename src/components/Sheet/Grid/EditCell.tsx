@@ -9,7 +9,7 @@ interface IEditCellProps {
 
 export default function EditCell({ cell, data }: IEditCellProps) {
   const { columnId, height, rowId, width, x, y } = cell || {};
-  const { background = "#FFFFFF" } = data || "";
+  const { background = "#FFFFFF" } = data || {};
 
   const cellId = useMemo(() => {
     if (!columnId) return;

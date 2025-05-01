@@ -1,15 +1,15 @@
-type IRect = {
+export type IRect = {
   x: number;
   y: number;
   width: number;
   height: number;
 };
 
-type IRow = {
+export type IRow = {
   rowId: number;
 } & IRect;
 
-type IColumn = {
+export type IColumn = {
   columnId: number;
 } & IRect;
 
@@ -58,4 +58,10 @@ export type ICellProps = {
   text?: string;
   content?: any[];
   background?: string;
+};
+
+export type IAutoFillData = {
+  createCells: { rowId: number; columnId: number }[];
+  updateCells: string[];
+  cellId: string;
 };

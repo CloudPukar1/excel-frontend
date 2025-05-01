@@ -7,3 +7,7 @@ export const createGrid = (sheetId: string) => {
 export const removeGridById = (gridId: string) => {
   return api.delete(`/grid/${gridId}`);
 };
+
+export const getGridById = (gridId: string) => {
+  return api.get(`/grid/${gridId}`);
+};
