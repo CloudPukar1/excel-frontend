@@ -14,7 +14,7 @@ type IColumn = {
 } & IRect;
 
 export type ICell = {
-  cellId: number;
+  cellId: string;
   rowId: number;
   columnId: number;
 } & IRect;
@@ -42,6 +42,10 @@ export type ISheetList = {
 
 export type IRowDirection = "above" | "below";
 export type IColumnDirection = "left" | "right";
+
+export type IColumnDetail = { _id: string; columnId: number; width: number };
+export type IRowDetail = { _id: string; rowId: number; height: number };
+export type ICellDetail = ICellProps & Pick<ICell, "rowId" | "columnId">;
 
 export type IGrid = {
   rows: IRow[];

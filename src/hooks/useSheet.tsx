@@ -1,7 +1,14 @@
 import { createGrid, removeGridById } from "@/services/Grid";
 import { deleteColumn, deleteRow } from "@/services/Cell";
 import { getSheetById, updateSheetById } from "@/services/Sheet";
-import { ICell, IGrid, ISheetDetail } from "@/types/Sheets";
+import {
+  ICell,
+  ICellDetail,
+  IColumnDetail,
+  IGrid,
+  IRowDetail,
+  ISheetDetail,
+} from "@/types/Sheets";
 import {
   createContext,
   Dispatch,
@@ -10,6 +17,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import toast from "react-hot-toast";
@@ -19,6 +27,7 @@ type ISheetContext = {
   editCell: ICell | null;
   isSheetLoading: boolean;
   sheetDetail: ISheetDetail | null;
+  getCellById: (cellId?: string) => ICellDetail | undefined;
   handleCreateGrid: () => void;
   handleDeleteGrid: (index: number, gridId: string) => void;
   handlePasteCell: () => void;
@@ -52,6 +61,11 @@ export default function SheetProvider({ children }: PropsWithChildren) {
     columns: [],
     rows: [],
   });
+
+  const rowDetails = useRef<Map<string, IRowDetail>>(new Map());
+  const columnDetails = useRef<Map<string, IColumnDetail>>(new Map());
+  const cellDetails = useRef<Map<string, ICellDetail>>(new Map());
+  const cellIds = useRef<Map<string, string>>(new Map());
 
   const selectedCell = useMemo(() => {
     const cell = grid.cells.find(({ cellId }) => cellId === selectedCellId);
@@ -108,6 +122,14 @@ export default function SheetProvider({ children }: PropsWithChildren) {
     } catch (error: any) {
       toast.error(error?.message);
     }
+  };
+
+  const getCellById: ISheetContext["getCellById"] = (cellId) => {
+    if (typeof cellId !== "string") return;
+    if (cellDetails.current.has(cellId)) return cellDetails.current.get(cellId);
+    const id = cellIds.current.get(cellId);
+    if (!id) return;
+    return cellDetails.current.get(id);
   };
 
   const handleCreateGrid: ISheetContext["handleCreateGrid"] = async () => {
@@ -191,6 +213,7 @@ export default function SheetProvider({ children }: PropsWithChildren) {
         setEditCell,
         sheetDetail,
         isSheetLoading,
+        getCellById,
         handlePasteCell,
         handleCopyCell,
         handleDeleteRow,

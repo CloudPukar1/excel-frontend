@@ -5,6 +5,7 @@ import EditCell from "./EditCell";
 export default function Grid() {
   const {
     editCell,
+    getCellById,
     handleCopyCell,
     handlePasteCell,
     handleDeleteRow,
@@ -15,7 +16,9 @@ export default function Grid() {
 
   return (
     <>
-      {editCell && <EditCell />}
+      {editCell && (
+        <EditCell cell={editCell} data={getCellById(editCell?.cellId)} />
+      )}
       <ContextMenu
         onCopy={handleCopyCell}
         onPaste={handlePasteCell}
