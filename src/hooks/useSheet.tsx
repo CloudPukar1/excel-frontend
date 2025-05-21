@@ -1,7 +1,8 @@
 import { createGrid, getGridById, removeGridById } from "@/services/Grid";
-import { deleteColumn, deleteRow } from "@/services/Cell";
+import { deleteColumn, deleteRow, duplicateCells } from "@/services/Cell";
 import { getSheetById, updateSheetById } from "@/services/Sheet";
 import {
+  IAutoFillData,
   ICell,
   ICellDetail,
   IColumn,
@@ -28,6 +29,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 type ISheetContext = {
   scale: number;
+  grid: IGrid;
   copiedCell: ICell | null;
   editCell: ICell | null;
   isSheetLoading: boolean;
@@ -37,18 +39,26 @@ type ISheetContext = {
   selectedCell: ICell | null;
   selectedRow: IRow | null;
   selectedColumn: IColumn | null;
+  setCopyCellId: Dispatch<SetStateAction<string | null>>;
+  setSelectedCellId: Dispatch<SetStateAction<string | null>>;
   getCellById: (cellId?: string) => ICellDetail | undefined;
+  getRowById: (rowId?: number) => IRowDetail | undefined;
+  getColumnById: (columnId?: number) => IColumnDetail | undefined;
   handleCreateGrid: () => void;
   handleDeleteGrid: (index: number, gridId: string) => void;
   handlePasteCell: () => void;
   handleCopyCell: () => void;
   handleDeleteRow: () => void;
   handleInsertRow: () => void;
+  handleAutoFillCell: (data: IAutoFillData) => void;
   handleDeleteColumn: () => void;
   handleInsertColumn: () => void;
   handleTitleChange: (title: string) => void;
+  setGrid: Dispatch<SetStateAction<IGrid>>;
   setEditCell: Dispatch<SetStateAction<ICell | null>>;
   setContextMenuRect: Dispatch<SetStateAction<Pick<IRect, "x" | "y"> | null>>;
+  setSelectedColumnId: Dispatch<SetStateAction<number | null>>;
+  setSelectedRowId: Dispatch<SetStateAction<number | null>>;
 };
 
 const SheetContext = createContext({} as ISheetContext);
@@ -60,6 +70,7 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   const searchParams = new URLSearchParams(location.search);
   const gridId = searchParams.get("gridId");
 
+  const [syncState, setSyncState] = useState(0);
   const [isSheetLoading, setIsSheetLoading] = useState(true);
   const [isGridLoading, setIsGridLoading] = useState(true);
   const [scale, setScale] = useState(1);
@@ -86,6 +97,8 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   const columnDetails = useRef<Map<string, IColumnDetail>>(new Map());
   const cellDetails = useRef<Map<string, ICellDetail>>(new Map());
   const cellIds = useRef<Map<string, string>>(new Map());
+  const columnIds = useRef<Map<number, string>>(new Map());
+  const rowIds = useRef<Map<number, string>>(new Map());
 
   const selectedCell = useMemo(() => {
     const cell = grid.cells.find(({ cellId }) => cellId === selectedCellId);
@@ -261,6 +274,43 @@ export default function SheetProvider({ children }: PropsWithChildren) {
       toast.error(error?.message);
     }
   };
+
+  const getRowById: ISheetContext["getRowById"] = (rowId) => {
+    if (typeof rowId !== "number") return;
+    const id = rowIds.current.get(rowId);
+    if (!id) return;
+    return rowDetails.current.get(id);
+  };
+
+  const getColumnById: ISheetContext["getColumnById"] = (columnId) => {
+    if (typeof columnId !== "number") return;
+    const id = columnIds.current.get(columnId);
+    if (!id) return;
+    return columnDetails.current.get(id);
+  };
+
+  const forceUpdate = () => {
+    setSyncState(Math.random() + 1);
+  };
+
+  const handleAutoFillCell: ISheetContext["handleAutoFillCell"] = async (
+    data
+  ) => {
+    if (!gridId) return;
+
+    try {
+      const {
+        data: {
+          data: { cells },
+        },
+      } = await duplicateCells(gridId, data);
+      setCellDetails(cells);
+      forceUpdate();
+    } catch (error: any) {
+      toast.error(error?.message);
+    }
+  };
+
   const handleInsertColumn: ISheetContext["handleInsertColumn"] =
     async () => {};
 
@@ -275,13 +325,19 @@ export default function SheetProvider({ children }: PropsWithChildren) {
   return (
     <SheetContext.Provider
       value={{
+        setCopyCellId,
         scale,
+        grid,
+        setGrid,
+        getRowById,
         selectedCell,
         contextMenuRect,
         setContextMenuRect,
         editCell,
         copiedCell,
         setEditCell,
+        getColumnById,
+        setSelectedCellId,
         selectedRow,
         selectedColumn,
         sheetDetail,
@@ -297,6 +353,9 @@ export default function SheetProvider({ children }: PropsWithChildren) {
         handleCreateGrid,
         handleDeleteGrid,
         handleTitleChange,
+        handleAutoFillCell,
+        setSelectedRowId,
+        setSelectedColumnId,
       }}
     >
       {children}

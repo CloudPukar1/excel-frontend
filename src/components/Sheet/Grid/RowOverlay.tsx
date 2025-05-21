@@ -1,12 +1,10 @@
 import { IRow } from "@/types/Sheets";
 
 interface IRowOverlayProps {
-  column: IRow;
+  row: IRow;
 }
 
-export default function RowOverlay({
-  column: { height, x },
-}: IRowOverlayProps) {
+export default function RowOverlay({ row: { height, x } }: IRowOverlayProps) {
   const top = `calc(${x}px - var(--col-width))`;
 
   return (

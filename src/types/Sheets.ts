@@ -65,3 +65,38 @@ export type IAutoFillData = {
   updateCells: string[];
   cellId: string;
 };
+
+export type IAutoFillDetail = {
+  srcCellId: string;
+  destCellId?: string;
+  rect: {
+    width: number;
+    height: number;
+    translateX: number;
+    translateY: number;
+  };
+};
+
+export interface IConfig {
+  lineWidth: number;
+  strokeStyle: string;
+  cellHeight: number;
+  cellWidth: number;
+  colWidth: number;
+  defaultFont: string;
+  defaultFontSize: string;
+  scrollBarSize: number;
+  scrollThumbSize: number;
+  rowHeight: number;
+  customFonts: string[];
+  fonts: Record<string, string>;
+  scale: number[];
+  fontSizes: string[];
+}
+
+export type IRenderGrid = (data: {
+  rowStart: number;
+  colStart: number;
+  offsetX?: number;
+  offsetY?: number;
+}) => void;
